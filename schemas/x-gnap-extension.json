@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shujaapay.me/schemas/x-gnap-extension.json",
+  "title": "x-gnap OpenAPI Security Scheme Extension",
+  "description": "JSON Schema for the x-gnap vendor extension, representing GNAP (RFC 9635) authorization in OpenAPI documents.",
+  "type": "object",
+  "required": ["grant_endpoint"],
+  "properties": {
+    "grant_endpoint": {
+      "type": "string",
+      "format": "uri",
+      "description": "The URL of the GNAP authorization server's grant endpoint where clients initiate grant requests (RFC 9635 Section 2)."
+    },
+    "token_formats": {
+      "type": "array",
+      "description": "Supported access token formats.",
+      "items": {
+        "type": "string",
+        "enum": ["bearer", "pop"]
+      },
+      "default": ["bearer"]
+    },
+    "key_proofs": {
+      "type": "array",
+      "description": "Supported key proof mechanisms for demonstrating possession of a key (RFC 9635 Section 7.3).",
+      "items": {
+        "$ref": "#/$defs/KeyProof"
+      }
+    },
+    "interaction": {
+      "type": "object",
+      "description": "Supported interaction modes for resource owner authorization (RFC 9635 Section 2.5).",
+      "properties": {
+        "start": {
+          "type": "array",
+          "description": "Methods the client can use to start interaction with the resource owner.",
+          "items": {
+            "type": "string",
+            "enum": ["redirect", "app", "user_code", "user_code_uri"]
+          }
+        },
+        "finish": {
+          "type": "array",
+          "description": "Methods the client can use to receive the result of interaction.",
+          "items": {
+            "type": "string",
+            "enum": ["redirect", "push"]
+          }
+        }
+      }
+    },
+    "access_rights": {
+      "type": "array",
+      "description": "Defined resource access right types and their supported actions (RFC 9635 Section 8).",
+      "items": {
+        "$ref": "#/$defs/AccessRight"
+      }
+    },
+    "continuation": {
+      "type": "object",
+      "description": "Grant continuation support (RFC 9635 Section 5).",
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "Whether the authorization server supports grant continuation.",
+          "default": true
+        },
+        "poll": {
+          "type": "boolean",
+          "description": "Whether the client can poll for grant status.",
+          "default": true
+        },
+        "wait": {
+          "type": "boolean",
+          "description": "Whether the authorization server supports the wait parameter for long-polling.",
+          "default": false
+        }
+      }
+    },
+    "key_rotation": {
+      "type": "boolean",
+      "description": "Whether the authorization server supports key rotation for bound access tokens.",
+      "default": false
+    },
+    "token_management": {
+      "type": "object",
+      "description": "Token management capabilities.",
+      "properties": {
+        "rotation": {
+          "type": "boolean",
+          "description": "Whether access tokens can be rotated (RFC 9635 Section 6.1).",
+          "default": true
+        },
+        "revocation": {
+          "type": "boolean",
+          "description": "Whether access tokens can be revoked (RFC 9635 Section 6.2).",
+          "default": true
+        }
+      }
+    }
+  },
+  "$defs": {
+    "KeyProof": {
+      "type": "object",
+      "required": ["method"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["httpsig", "mtls", "jwsd", "dpop"],
+          "description": "The key proof method (RFC 9635 Section 7.3)."
+        },
+        "alg": {
+          "type": "array",
+          "description": "Supported signing algorithms for this proof method.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "rsa-pss-sha512",
+              "rsa-v1_5-sha256",
+              "ecdsa-p256-sha256",
+              "ecdsa-p384-sha384",
+              "ed25519",
+              "hmac-sha256"
+            ]
+          }
+        },
+        "content_digest": {
+          "type": "boolean",
+          "description": "Whether Content-Digest header is required for request body integrity.",
+          "default": false
+        }
+      }
+    },
+    "AccessRight": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The type of resource being accessed."
+        },
+        "actions": {
+          "type": "array",
+          "description": "Permitted actions on this resource type.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "locations": {
+          "type": "array",
+          "description": "Specific resource server locations where this access right applies.",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "datatypes": {
+          "type": "array",
+          "description": "Types of data that can be accessed.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "grant_endpoint": "https://auth.wallet.example/",
+      "token_formats": ["bearer"],
+      "key_proofs": [
+        {
+          "method": "httpsig",
+          "alg": ["ed25519"],
+          "content_digest": true
+        }
+      ],
+      "interaction": {
+        "start": ["redirect"],
+        "finish": ["redirect"]
+      },
+      "access_rights": [
+        {
+          "type": "incoming-payment",
+          "actions": ["create", "read", "read-all", "list", "complete"]
+        },
+        {
+          "type": "outgoing-payment",
+          "actions": ["create", "read", "read-all", "list"]
+        },
+        {
+          "type": "quote",
+          "actions": ["create", "read", "read-all"]
+        }
+      ],
+      "continuation": {
+        "supported": true,
+        "poll": true,
+        "wait": false
+      }
+    }
+  ]
+}

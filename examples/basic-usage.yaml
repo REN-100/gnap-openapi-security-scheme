@@ -1,0 +1,45 @@
+# Minimal example: GNAP-protected API with x-gnap extension
+openapi: "3.1.0"
+info:
+  title: Simple GNAP-Protected API
+  version: "1.0.0"
+  description: Minimal example demonstrating the x-gnap extension
+
+servers:
+  - url: https://api.example.com
+
+components:
+  securitySchemes:
+    gnap_auth:
+      type: apiKey
+      in: header
+      name: Authorization
+      x-gnap:
+        grant_endpoint: "https://auth.example.com/"
+        key_proofs:
+          - method: httpsig
+            alg: [ed25519]
+        token_formats: [bearer]
+
+security:
+  - gnap_auth: []
+
+paths:
+  /resources:
+    get:
+      summary: List resources
+      operationId: listResources
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
