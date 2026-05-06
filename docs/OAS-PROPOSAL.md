@@ -130,9 +130,9 @@ The `gnap` type is designed to be extensible. New key proof methods (e.g., DPoP-
 |-----------|--------|------|
 | `x-gnap` JSON Schema | ✅ Complete | `schemas/x-gnap-extension.json` |
 | Annotated Open Payments Spec | ✅ Complete | `specs/open-payments-gnap.yaml` |
-| Kiota GNAP Provider (TypeScript) | 🔄 In Progress | `kiota-gnap-auth-ts` |
-| Kiota GNAP Provider (Python) | 🔄 In Progress | `kiota-gnap-auth-python` |
-| HTTP Message Signatures (TypeScript) | ✅ Complete | `http-message-signatures-ts` |
+| Kiota GNAP Provider (TypeScript) | ✅ v0.2.0 | `kiota-gnap-auth-ts` |
+| Kiota GNAP Provider (Python) | ✅ v0.2.0 | `kiota-gnap-auth-python` |
+| HTTP Message Signatures (TypeScript) | ✅ v0.2.0 | `http-message-signatures-ts` |
 
 ## 7. References
 

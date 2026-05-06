@@ -1,0 +1,454 @@
+# Open Payments API — Annotated with x-gnap Extension
+#
+# This is the Open Payments API specification annotated with the x-gnap
+# vendor extension for GNAP (RFC 9635) authorization.
+#
+# The x-gnap extension enables SDK generators (e.g., Kiota) to
+# automatically wire up GNAP authentication when generating client SDKs.
+#
+# @see https://openpayments.dev
+# @see https://www.rfc-editor.org/rfc/rfc9635
+# @see https://github.com/REN-100/gnap-openapi-security-scheme
+
+openapi: "3.1.0"
+info:
+  title: Open Payments API
+  version: "1.0.0"
+  description: |
+    Open Payments is a standard for initiating payments on Interledger.
+    All API requests (except wallet address resolution) require GNAP
+    authorization with HTTP Message Signatures (RFC 9421).
+  contact:
+    name: Open Payments
+    url: https://openpayments.dev
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: https://{walletHost}
+    description: Wallet address server (varies per wallet provider)
+    variables:
+      walletHost:
+        default: wallet.example.com
+
+components:
+  securitySchemes:
+    gnap_auth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: |
+        GNAP (RFC 9635) authorization.
+        
+        Clients MUST:
+        1. Discover the auth server via wallet address resolution
+        2. Request a grant from the auth server
+        3. Include the access token in the Authorization header as "GNAP {token}"
+        4. Sign all requests with HTTP Message Signatures (RFC 9421)
+        
+        The x-gnap extension below describes the GNAP configuration
+        that SDK generators should use to wire up authentication.
+      x-gnap:
+        # NOTE: In Open Payments, the grant endpoint is discovered at runtime
+        # via wallet address resolution (GET wallet-address → authServer).
+        # This URL serves as the default/example for tooling and documentation.
+        grant_endpoint: "https://auth.wallet.example/"
+        token_formats:
+          - bearer
+        key_proofs:
+          - method: httpsig
+            alg:
+              - ed25519
+              - ecdsa-p256-sha256
+            content_digest: true
+        interaction:
+          start:
+            - redirect
+          finish:
+            - redirect
+        access_rights:
+          - type: incoming-payment
+            actions: [create, read, read-all, list, list-all, complete]
+          - type: outgoing-payment
+            actions: [create, read, read-all, list, list-all]
+          - type: quote
+            actions: [create, read, read-all]
+        continuation:
+          supported: true
+          poll: true
+          wait: true
+        token_management:
+          rotation: true
+          revocation: true
+
+  schemas:
+    WalletAddress:
+      type: object
+      required: [id, assetCode, assetScale, authServer, resourceServer]
+      properties:
+        id:
+          type: string
+          format: uri
+          example: "https://wallet.example.com/alice"
+        publicName:
+          type: string
+          example: "Alice"
+        assetCode:
+          type: string
+          example: "USD"
+        assetScale:
+          type: integer
+          example: 2
+        authServer:
+          type: string
+          format: uri
+          example: "https://auth.wallet.example.com"
+        resourceServer:
+          type: string
+          format: uri
+          example: "https://wallet.example.com"
+
+    Amount:
+      type: object
+      required: [value, assetCode, assetScale]
+      properties:
+        value:
+          type: string
+          description: Unsigned 64-bit integer as string
+        assetCode:
+          type: string
+          description: ISO 4217 currency code
+        assetScale:
+          type: integer
+          description: Number of decimal places
+
+    IncomingPayment:
+      type: object
+      required: [id, walletAddress, completed, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uri
+        walletAddress:
+          type: string
+          format: uri
+        incomingAmount:
+          $ref: "#/components/schemas/Amount"
+        receivedAmount:
+          $ref: "#/components/schemas/Amount"
+        completed:
+          type: boolean
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    OutgoingPayment:
+      type: object
+      required: [id, walletAddress, quoteId, debitAmount, receiveAmount, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uri
+        walletAddress:
+          type: string
+          format: uri
+        quoteId:
+          type: string
+          format: uri
+        debitAmount:
+          $ref: "#/components/schemas/Amount"
+        receiveAmount:
+          $ref: "#/components/schemas/Amount"
+        sentAmount:
+          $ref: "#/components/schemas/Amount"
+        metadata:
+          type: object
+          additionalProperties: true
+        failed:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Quote:
+      type: object
+      required: [id, walletAddress, receiver, debitAmount, receiveAmount, createdAt, expiresAt]
+      properties:
+        id:
+          type: string
+          format: uri
+        walletAddress:
+          type: string
+          format: uri
+        receiver:
+          type: string
+          format: uri
+        debitAmount:
+          $ref: "#/components/schemas/Amount"
+        receiveAmount:
+          $ref: "#/components/schemas/Amount"
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+security:
+  - gnap_auth: []
+
+paths:
+  # --- Wallet Address Resolution (Public) ---
+  /:
+    get:
+      summary: Get wallet address
+      operationId: getWalletAddress
+      description: |
+        Returns wallet address metadata. This is the entry point for
+        Open Payments — clients use this to discover the auth server.
+        
+        This endpoint does NOT require authentication.
+      security: []
+      responses:
+        "200":
+          description: Wallet address information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletAddress"
+
+  # --- Incoming Payments ---
+  /incoming-payments:
+    post:
+      summary: Create incoming payment
+      operationId: createIncomingPayment
+      tags: [Incoming Payments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [walletAddress]
+              properties:
+                walletAddress:
+                  type: string
+                  format: uri
+                incomingAmount:
+                  $ref: "#/components/schemas/Amount"
+                expiresAt:
+                  type: string
+                  format: date-time
+                metadata:
+                  type: object
+                  additionalProperties: true
+      responses:
+        "201":
+          description: Incoming payment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IncomingPayment"
+
+    get:
+      summary: List incoming payments
+      operationId: listIncomingPayments
+      tags: [Incoming Payments]
+      parameters:
+        - name: wallet-address
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uri
+      responses:
+        "200":
+          description: List of incoming payments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/IncomingPayment"
+                  pagination:
+                    type: object
+
+  /incoming-payments/{id}:
+    get:
+      summary: Get incoming payment
+      operationId: getIncomingPayment
+      tags: [Incoming Payments]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Incoming payment details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IncomingPayment"
+
+  /incoming-payments/{id}/complete:
+    post:
+      summary: Complete incoming payment
+      operationId: completeIncomingPayment
+      tags: [Incoming Payments]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Incoming payment completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IncomingPayment"
+
+  # --- Outgoing Payments ---
+  /outgoing-payments:
+    post:
+      summary: Create outgoing payment
+      operationId: createOutgoingPayment
+      tags: [Outgoing Payments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [walletAddress, quoteId]
+              properties:
+                walletAddress:
+                  type: string
+                  format: uri
+                quoteId:
+                  type: string
+                  format: uri
+                metadata:
+                  type: object
+                  additionalProperties: true
+      responses:
+        "201":
+          description: Outgoing payment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutgoingPayment"
+
+    get:
+      summary: List outgoing payments
+      operationId: listOutgoingPayments
+      tags: [Outgoing Payments]
+      parameters:
+        - name: wallet-address
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uri
+      responses:
+        "200":
+          description: List of outgoing payments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/OutgoingPayment"
+
+  /outgoing-payments/{id}:
+    get:
+      summary: Get outgoing payment
+      operationId: getOutgoingPayment
+      tags: [Outgoing Payments]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Outgoing payment details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutgoingPayment"
+
+  # --- Quotes ---
+  /quotes:
+    post:
+      summary: Create a quote
+      operationId: createQuote
+      tags: [Quotes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [walletAddress, receiver]
+              properties:
+                walletAddress:
+                  type: string
+                  format: uri
+                receiver:
+                  type: string
+                  format: uri
+                  description: URL of the incoming payment to pay
+                debitAmount:
+                  $ref: "#/components/schemas/Amount"
+                receiveAmount:
+                  $ref: "#/components/schemas/Amount"
+      responses:
+        "201":
+          description: Quote created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quote"
+
+  /quotes/{id}:
+    get:
+      summary: Get quote
+      operationId: getQuote
+      tags: [Quotes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Quote details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quote"

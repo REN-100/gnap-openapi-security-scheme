@@ -1,0 +1,34 @@
+{
+  "name": "@shujaapay/gnap-openapi-security-scheme",
+  "version": "1.0.0",
+  "description": "GNAP (RFC 9635) OpenAPI Security Scheme extension — x-gnap vendor extension with JSON Schema validation",
+  "main": "schemas/x-gnap-extension.json",
+  "scripts": {
+    "test": "node tests/validate-schema.js",
+    "validate": "node tests/validate-schema.js"
+  },
+  "keywords": [
+    "gnap",
+    "openapi",
+    "security-scheme",
+    "rfc9635",
+    "rfc9421",
+    "open-payments",
+    "interledger",
+    "shujaapay",
+    "kiota",
+    "x-gnap"
+  ],
+  "author": "Super App Africa Limited (ShujaaPay)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/REN-100/gnap-openapi-security-scheme"
+  },
+  "homepage": "https://www.shujaapay.me",
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "js-yaml": "^4.1.0"
+  }
+}

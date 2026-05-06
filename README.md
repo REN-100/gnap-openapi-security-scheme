@@ -5,6 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![OpenAPI](https://img.shields.io/badge/OpenAPI-3.1-blue.svg)](https://spec.openapis.org/oas/v3.1.0)
 [![RFC 9635](https://img.shields.io/badge/RFC-9635-orange.svg)](https://www.rfc-editor.org/rfc/rfc9635)
+[![CI](https://github.com/REN-100/gnap-openapi-security-scheme/actions/workflows/ci.yml/badge.svg)](https://github.com/REN-100/gnap-openapi-security-scheme/actions)
 
 ## Problem Statement
 
@@ -80,7 +81,10 @@ gnap-openapi-security-scheme/
     OAS-PROPOSAL.md             # Draft proposal for OAS TSC
     GNAP-PRIMER.md              # Quick intro to GNAP for API designers
   tests/
-    validate-schema.js          # Schema validation tests
+    validate-schema.js          # Schema validation tests (25 tests)
+  .github/workflows/
+    ci.yml                      # CI: schema validation on Node 18/20/22
+  package.json                  # Node.js project with ajv validation
   LICENSE
   README.md
 ```
@@ -144,10 +148,10 @@ kiota generate -l typescript \
 
 This specification is part of the **ShujaaPay GNAP Stack**, funded by the Interledger Foundation:
 
-- **This repo** - GNAP OpenAPI Security Scheme (Workstream 1)
-- [`http-message-signatures`](https://github.com/REN-100/http-message-signatures-ts) - RFC 9421 library (Workstream 4)
-- Kiota GNAP Provider (TypeScript) - Coming soon (Workstream 2)
-- Kiota GNAP Provider (Python) - Coming soon (Workstream 3)
+- **This repo** — GNAP OpenAPI Security Scheme (Workstream 1)
+- [`http-message-signatures`](https://github.com/REN-100/http-message-signatures-ts) — RFC 9421 library, v0.2.0 ✅ (Workstream 4)
+- [`kiota-gnap-auth-ts`](https://github.com/REN-100/kiota-gnap-auth-ts) — Kiota GNAP Provider (TypeScript), v0.2.0 ✅ (Workstream 2)
+- [`kiota-gnap-auth-python`](https://github.com/REN-100/kiota-gnap-auth-python) — Kiota GNAP Provider (Python), v0.2.0 ✅ (Workstream 3)
 
 ## Contributing
 

@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run schema validation tests
+        run: npm test
+
+      - name: Validate specs directory
+        run: |
+          for spec in specs/*.yaml; do
+            echo "Validating $spec..."
+            node tests/validate-schema.js "$spec"
+          done
+
+      - name: Verify file structure
+        run: |
+          test -f schemas/x-gnap-extension.json
+          test -f specs/open-payments-gnap.yaml
+          test -f examples/basic-usage.yaml
+          test -f examples/full-featured.yaml
+          test -f docs/SPECIFICATION.md
+          test -f docs/OAS-PROPOSAL.md
+          test -f docs/GNAP-PRIMER.md
+          echo "All deliverables present"

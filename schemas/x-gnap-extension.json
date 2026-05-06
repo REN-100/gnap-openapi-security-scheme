@@ -84,7 +84,7 @@
     },
     "token_management": {
       "type": "object",
-      "description": "Token management capabilities.",
+      "description": "Token management capabilities (RFC 9635 Section 6).",
       "properties": {
         "rotation": {
           "type": "boolean",
@@ -95,6 +95,11 @@
           "type": "boolean",
           "description": "Whether access tokens can be revoked (RFC 9635 Section 6.2).",
           "default": true
+        },
+        "introspection": {
+          "type": "boolean",
+          "description": "Whether access tokens can be introspected (RFC 9635 Section 6.3).",
+          "default": false
         }
       }
     }
