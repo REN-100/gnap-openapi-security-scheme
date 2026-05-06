@@ -263,7 +263,110 @@ test('Rejects invalid signing algorithm', () => {
   assert(!valid, 'Should have rejected invalid algorithm');
 });
 
-// --- 4. YAML example file validation ---
+// --- 4. Open Payments-specific features ---
+console.log('\nOpen Payments Features:');
+
+test('AccessRight with identifier (wallet address scoping)', () => {
+  const valid = validate({
+    grant_endpoint: 'https://auth.wallet.example/',
+    access_rights: [
+      {
+        type: 'outgoing-payment',
+        actions: ['create', 'read'],
+        identifier: 'https://wallet.example/alice',
+      },
+    ],
+  });
+  assert(valid, `Validation errors: ${JSON.stringify(validate.errors)}`);
+});
+
+test('AccessRight with limits (debitAmount + receiveAmount)', () => {
+  const valid = validate({
+    grant_endpoint: 'https://auth.wallet.example/',
+    access_rights: [
+      {
+        type: 'outgoing-payment',
+        actions: ['create'],
+        identifier: 'https://wallet.example/alice',
+        limits: {
+          debitAmount: { value: '50000', assetCode: 'USD', assetScale: 2 },
+          receiveAmount: { value: '50000', assetCode: 'USD', assetScale: 2 },
+        },
+      },
+    ],
+  });
+  assert(valid, `Validation errors: ${JSON.stringify(validate.errors)}`);
+});
+
+test('AccessRight with limits and interval (recurring payments)', () => {
+  const valid = validate({
+    grant_endpoint: 'https://auth.wallet.example/',
+    access_rights: [
+      {
+        type: 'outgoing-payment',
+        actions: ['create'],
+        limits: {
+          debitAmount: { value: '100000', assetCode: 'KES', assetScale: 2 },
+          interval: 'R/2026-01-01T00:00:00Z/P1M',
+        },
+      },
+    ],
+  });
+  assert(valid, `Validation errors: ${JSON.stringify(validate.errors)}`);
+});
+
+test('Rejects Amount with invalid assetCode (lowercase)', () => {
+  const valid = validate({
+    grant_endpoint: 'https://auth.wallet.example/',
+    access_rights: [
+      {
+        type: 'outgoing-payment',
+        actions: ['create'],
+        limits: {
+          debitAmount: { value: '50000', assetCode: 'usd', assetScale: 2 },
+        },
+      },
+    ],
+  });
+  assert(!valid, 'Should reject lowercase currency code');
+});
+
+test('Rejects Amount missing required fields', () => {
+  const valid = validate({
+    grant_endpoint: 'https://auth.wallet.example/',
+    access_rights: [
+      {
+        type: 'outgoing-payment',
+        actions: ['create'],
+        limits: {
+          debitAmount: { value: '50000' },
+        },
+      },
+    ],
+  });
+  assert(!valid, 'Should reject Amount missing assetCode and assetScale');
+});
+
+test('Schema defines AccessLimits $def', () => {
+  assert(schema.$defs?.AccessLimits);
+  assert(schema.$defs.AccessLimits.properties.debitAmount);
+  assert(schema.$defs.AccessLimits.properties.receiveAmount);
+  assert(schema.$defs.AccessLimits.properties.interval);
+});
+
+test('Schema defines Amount $def', () => {
+  assert(schema.$defs?.Amount);
+  assert(schema.$defs.Amount.required.includes('value'));
+  assert(schema.$defs.Amount.required.includes('assetCode'));
+  assert(schema.$defs.Amount.required.includes('assetScale'));
+});
+
+test('AccessRight has identifier field in schema', () => {
+  assert(schema.$defs.AccessRight.properties.identifier);
+  assert(schema.$defs.AccessRight.properties.identifier.format === 'uri');
+});
+
+// --- 5. YAML example file validation ---
 console.log('\nExample Files:');
 
 const examplesDir = path.join(__dirname, '..', 'examples');
@@ -278,7 +381,7 @@ for (const file of exampleFiles) {
   });
 }
 
-// --- 5. Custom file validation (CLI) ---
+// --- 6. Custom file validation (CLI) ---
 const customFile = process.argv[2];
 if (customFile) {
   console.log(`\nCustom File: ${customFile}`);

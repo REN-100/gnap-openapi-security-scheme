@@ -2,6 +2,8 @@
 
 > A vendor extension and formal proposal to add GNAP (RFC 9635) as a security scheme type in the OpenAPI Specification, enabling automated SDK generation for Open Payments and other GNAP-protected APIs.
 
+[![ShujaaPay](https://img.shields.io/badge/ShujaaPay-GNAP%20Stack-blueviolet)](https://www.shujaapay.me)
+[![npm](https://img.shields.io/npm/v/@shujaapay/gnap-openapi-security-scheme)](https://www.npmjs.com/package/@shujaapay/gnap-openapi-security-scheme)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![OpenAPI](https://img.shields.io/badge/OpenAPI-3.1-blue.svg)](https://spec.openapis.org/oas/v3.1.0)
 [![RFC 9635](https://img.shields.io/badge/RFC-9635-orange.svg)](https://www.rfc-editor.org/rfc/rfc9635)
@@ -140,18 +142,64 @@ kiota generate -l typescript \
 | Grant Endpoint | `grant_endpoint` | URL where clients initiate grant requests |
 | Key Proofs | `key_proofs` | How clients prove key possession (httpsig, mtls, jwsd) |
 | Interaction | `interaction` | How the resource owner interacts (redirect, user_code) |
-| Access Rights | `access_rights` | Fine-grained resource permissions |
+| Access Rights | `access_rights` | Fine-grained resource permissions with wallet address scoping |
 | Token Format | `token_formats` | Bearer or proof-of-possession tokens |
 | Continuation | `continuation` | Grant update, cancel, and polling support |
+| Identifier | `identifier` | Wallet address scoping for access rights (Open Payments) |
+| Limits | `limits` | Financial constraints: debitAmount, receiveAmount, interval |
+
+## Integration with ShujaaPay
+
+[ShujaaPay](https://www.shujaapay.me) is an Open Payments-compliant fintech platform built on the Interledger Protocol. The `x-gnap` extension powers ShujaaPay's authentication layer:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    ShujaaPay Platform                        │
+│                   www.shujaapay.me                           │
+│                                                             │
+│  ┌──────────────┐  ┌──────────────────┐  ┌──────────────┐  │
+│  │   Gateway     │  │  Wallet Service  │  │   Payments   │  │
+│  │  (Node.js)    │──│   (Node.js)      │──│  (Node.js)   │  │
+│  └──────┬───────┘  └────────┬─────────┘  └──────────────┘  │
+│         │                   │                                │
+│  ┌──────┴───────────────────┴──────────────────────────┐    │
+│  │            GNAP Authentication Layer                 │    │
+│  │                                                      │    │
+│  │  x-gnap extension  ──→  Schema validation            │    │
+│  │  kiota-gnap-auth-ts ──→  SDK token management        │    │
+│  │  http-signatures    ──→  RFC 9421 request signing    │    │
+│  └──────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### How it works in production:
+
+1. **API Definition** — ShujaaPay's OpenAPI spec uses `x-gnap` to describe GNAP auth requirements
+2. **SDK Generation** — Kiota reads `x-gnap` and generates type-safe GNAP clients
+3. **Token Lifecycle** — `@shujaapay/kiota-gnap-auth-ts` manages grant requests, token rotation, and continuation
+4. **Request Signing** — `@shujaapay/http-message-signatures` signs every API call per RFC 9421
+5. **Wallet Scoping** — Access rights use `identifier` to scope grants to specific wallet addresses (e.g., `https://wallet.shujaapay.me/alice`)
+
+### Install
+
+```bash
+# npm
+npm install @shujaapay/gnap-openapi-security-scheme
+
+# Use in your project
+const schema = require('@shujaapay/gnap-openapi-security-scheme');
+```
 
 ## Relationship to Other Projects
 
-This specification is part of the **ShujaaPay GNAP Stack**:
+This specification is part of the **[ShujaaPay](https://www.shujaapay.me) GNAP Stack** — open-source tooling for the [Open Payments](https://openpayments.dev) ecosystem:
 
-- **This repo** — GNAP OpenAPI Security Scheme (Workstream 1)
-- [`http-message-signatures`](https://github.com/REN-100/http-message-signatures-ts) — RFC 9421 library, v0.2.0 ✅ (Workstream 4)
-- [`kiota-gnap-auth-ts`](https://github.com/REN-100/kiota-gnap-auth-ts) — Kiota GNAP Provider (TypeScript), v0.2.0 ✅ (Workstream 2)
-- [`kiota-gnap-auth-python`](https://github.com/REN-100/kiota-gnap-auth-python) — Kiota GNAP Provider (Python), v0.2.0 ✅ (Workstream 3)
+| Repo | Package | Status |
+|------|---------|--------|
+| **This repo** — GNAP OpenAPI Security Scheme | `@shujaapay/gnap-openapi-security-scheme` | 🔧 In progress |
+| [`kiota-gnap-auth-ts`](https://github.com/REN-100/kiota-gnap-auth-ts) — Kiota GNAP Provider (TypeScript) | [`@shujaapay/kiota-gnap-auth-ts`](https://www.npmjs.com/package/@shujaapay/kiota-gnap-auth-ts) | 🔧 In progress |
+| [`kiota-gnap-auth-python`](https://github.com/REN-100/kiota-gnap-auth-python) — Kiota GNAP Provider (Python) | [`shujaapay-kiota-gnap-auth`](https://pypi.org/project/shujaapay-kiota-gnap-auth/) | 🔧 In progress |
+| [`http-message-signatures`](https://github.com/REN-100/http-message-signatures-ts) — RFC 9421 library | `@shujaapay/http-message-signatures` | 🔧 In progress |
 
 ## Contributing
 
@@ -165,6 +213,7 @@ Key areas where we need help:
 
 ## References
 
+- [ShujaaPay](https://www.shujaapay.me) — Open Payments-compliant fintech platform
 - [RFC 9635 - Grant Negotiation and Authorization Protocol (GNAP)](https://www.rfc-editor.org/rfc/rfc9635)
 - [RFC 9421 - HTTP Message Signatures](https://www.rfc-editor.org/rfc/rfc9421)
 - [OpenAPI Specification 3.1](https://spec.openapis.org/oas/v3.1.0)
@@ -176,3 +225,6 @@ Key areas where we need help:
 
 MIT License - see [LICENSE](LICENSE) for details.
 
+---
+
+Built by [ShujaaPay](https://www.shujaapay.me) — Global Payments. Local Freedom.

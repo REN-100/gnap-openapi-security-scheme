@@ -165,6 +165,55 @@
           "items": {
             "type": "string"
           }
+        },
+        "identifier": {
+          "type": "string",
+          "format": "uri",
+          "description": "A wallet address or resource identifier that scopes this access right to a specific account (Open Payments §3)."
+        },
+        "limits": {
+          "$ref": "#/$defs/AccessLimits",
+          "description": "Financial limits constraining this access right (Open Payments §3.1)."
+        }
+      }
+    },
+    "AccessLimits": {
+      "type": "object",
+      "description": "Financial limits for access rights, used in Open Payments to constrain outgoing payment grants.",
+      "properties": {
+        "debitAmount": {
+          "$ref": "#/$defs/Amount",
+          "description": "Maximum amount that can be debited from the sender's account."
+        },
+        "receiveAmount": {
+          "$ref": "#/$defs/Amount",
+          "description": "Maximum amount that can be received by the recipient's account."
+        },
+        "interval": {
+          "type": "string",
+          "description": "ISO 8601 duration for recurring payment intervals (e.g., 'R/2026-01-01T00:00:00Z/P1M' for monthly)."
+        }
+      }
+    },
+    "Amount": {
+      "type": "object",
+      "required": ["value", "assetCode", "assetScale"],
+      "description": "Monetary amount per the Open Payments specification.",
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "The amount value as a string integer (e.g., '50000' for $500.00 at assetScale 2)."
+        },
+        "assetCode": {
+          "type": "string",
+          "description": "ISO 4217 currency code (e.g., 'USD', 'KES').",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "assetScale": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "Scale factor for the value (e.g., 2 means value is in cents)."
         }
       }
     }
@@ -187,11 +236,25 @@
       "access_rights": [
         {
           "type": "incoming-payment",
-          "actions": ["create", "read", "read-all", "list", "complete"]
+          "actions": ["create", "read", "read-all", "list", "complete"],
+          "identifier": "https://wallet.example/alice"
         },
         {
           "type": "outgoing-payment",
-          "actions": ["create", "read", "read-all", "list"]
+          "actions": ["create", "read", "read-all", "list"],
+          "identifier": "https://wallet.example/alice",
+          "limits": {
+            "debitAmount": {
+              "value": "50000",
+              "assetCode": "USD",
+              "assetScale": 2
+            },
+            "receiveAmount": {
+              "value": "50000",
+              "assetCode": "USD",
+              "assetScale": 2
+            }
+          }
         },
         {
           "type": "quote",
