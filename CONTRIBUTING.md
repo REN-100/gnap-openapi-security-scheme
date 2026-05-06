@@ -1,6 +1,6 @@
 # Contributing to GNAP OpenAPI Security Scheme
 
-Thank you for your interest in contributing! This project is part of the ShujaaPay GNAP Stack, supported by the Interledger Foundation.
+Thank you for your interest in contributing! This project is part of the ShujaaPay GNAP Stack.
 
 ## How to Contribute
 

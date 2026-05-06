@@ -146,7 +146,7 @@ kiota generate -l typescript \
 
 ## Relationship to Other Projects
 
-This specification is part of the **ShujaaPay GNAP Stack**, funded by the Interledger Foundation:
+This specification is part of the **ShujaaPay GNAP Stack**:
 
 - **This repo** — GNAP OpenAPI Security Scheme (Workstream 1)
 - [`http-message-signatures`](https://github.com/REN-100/http-message-signatures-ts) — RFC 9421 library, v0.2.0 ✅ (Workstream 4)
@@ -176,6 +176,3 @@ Key areas where we need help:
 
 MIT License - see [LICENSE](LICENSE) for details.
 
-## Acknowledgments
-
-This project is supported by the [Interledger Foundation](https://interledger.org) through the SDK Grant Program.

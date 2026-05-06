@@ -4,7 +4,7 @@
 **Date:** April 2026  
 **Status:** Draft Proposal  
 **Target:** OpenAPI Technical Steering Committee (TSC)  
-**Funded by:** Interledger Foundation — SDK Grant Program
+**Submitted to:** Interledger Foundation — SDK Grant Program
 
 ---
 
@@ -148,5 +148,4 @@ The `gnap` type is designed to be extensible. New key proof methods (e.g., DPoP-
 **Submitted by:**  
 Super App Africa Limited  
 ShujaaPay — Global Payments. Local Freedom.  
-Interledger Foundation SDK Grant Recipient  
 Contact: rensonmumbo@gmail.com
